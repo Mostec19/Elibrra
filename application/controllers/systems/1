@@ -1,0 +1,346 @@
+<?php
+defined('BASEPATH') OR exit('No direct script access allowed');
+
+class DashBoard extends CI_Controller {
+
+	public function __construct(){
+		parent::__construct();
+		if(!$this->session->userdata('user_data')){
+			redirect('systems/Login');
+		}
+		$this ->load->library('form_validation');
+       	$this->load->helper(array('form', 'url'));
+
+     
+	}
+
+
+	public function index()
+	{
+		
+		$this->load->model('Dashboard_Model');
+		$this->load->model('books_model');
+		$result=$this->books_model->index();
+		$data=array('allbooks'=>$result);
+		// $this->load->view("back/books",$data);
+        $this->load->view('sys_admin/dashboard',$data);
+	}
+
+
+// Start of Adding payments methods
+// Loading add add_payment View
+	public function add_book(){
+		$this->load->model('books_model');
+		$result=$this->books_model->index();
+		$data=array('allbooks'=>$result);
+
+		// $this->load->view("back/books",$data);
+        $this->load->view('sys_admin/addbook');
+
+	}
+
+	public function add_admin(){
+		// $this->load->model('books_model');
+		// $result=$this->books_model->index();
+		// $data=array('allbooks'=>$result);
+
+		// $this->load->view("back/books",$data);
+        $this->load->view('sys_admin/addAdmin');
+
+	}
+
+	public function addAdmin(){	
+        $this->form_validation->set_rules('firstname', 'firstname', 'trim|required|min_length[3]|max_length[30]');
+        $this->form_validation->set_rules('lastname', 'lastname', 'trim|required|min_length[3]|max_length[30]');
+        $this->form_validation->set_rules('password', 'password', 'trim|required|min_length[6]');
+         $this->form_validation->set_rules('access_level', 'access_level', 'trim|required');
+        $this->form_validation->set_rules('email', 'email', 'trim|required|valid_email|is_unique[admins.email]');
+       $this->form_validation->set_rules('confirm_password', 'Confirm Password', 'trim|required|matches[password]');
+       
+        if ($this->form_validation->run() == FALSE) {
+            $this->add_admin();
+        } else {
+        $firstname = Null;
+		$lastname = Null;
+		$email = Null;
+		$password = Null;
+		$school_id=Null;
+		$status = Null;
+		$password = Null;
+		$access_level =Null;
+
+		extract($_POST);
+		$param['firstname']=$firstname;
+		$param['lastname']=$lastname;
+		$param['password']=$password;
+		$param['email']=$email;
+		$param['school_id']=$school_id;
+		$param['password']=$password;
+		$param['access_level']=$access_level;
+		$param['status']=$status;
+
+
+		if(isset($email)){
+			$this->load->model('System');
+			$check=$this->System->addAdmin($param);
+			$this->add_admin();
+
+			if($check==true)
+			{
+			  $this->session->set_flashdata('true', 'User was added successfully');
+			   redirect('systems/Dashboard/add_admin');
+			}
+			else
+			{
+			  $this->session->set_flashdata('error', "There was a Problem adding the user");
+			  redirect('systems/Dashboard/add_admin');
+			}
+		}
+          
+ 
+        }
+    }
+
+
+    public function add_user(){
+		// $this->load->model('books_model');
+		// $result=$this->books_model->index();
+		// $data=array('allbooks'=>$result);
+
+		// $this->load->view("back/books",$data);
+        $this->load->view('sys_admin/adduser');
+
+	}
+
+	public function adduser(){	
+        $this->form_validation->set_rules('firstname', 'firstname', 'trim|required|min_length[3]|max_length[32]');
+        $this->form_validation->set_rules('lastname', 'lastname', 'trim|required|min_length[3]|max_length[32]');
+        $this->form_validation->set_rules('password', 'password', 'trim|required|min_length[6]');
+         $this->form_validation->set_rules('account_type', 'account_type', 'trim|required');
+        $this->form_validation->set_rules('email', 'email', 'trim|required|valid_email|is_unique[admins.email]');
+       $this->form_validation->set_rules('confirm_password', 'Confirm Password', 'trim|required|matches[password]');
+       
+        if ($this->form_validation->run() == FALSE) {
+            $this->add_user();
+        } else {
+        $firstname = Null;
+		$lastname = Null;
+		$email = Null;
+		$password = Null;
+		$school_id=Null;
+		$status = Null;
+		$password = Null;
+		$account_type =Null;
+
+		extract($_POST);
+		$param['firstname']=$firstname;
+		$param['lastname']=$lastname;
+		$param['password']=$password;
+		$param['email']=$email;
+		$param['school_id']=$school_id;
+		$param['password']=$password;
+		$param['account_type']=$account_type;
+		$param['status']=$status;
+
+		if(isset($email)){
+			$this->load->model('System');
+			$check=$this->System->adduser($param);
+			$this->add_user();
+
+			if($check==true)
+			{
+			  $this->session->set_flashdata('true', 'User was added successfully');
+			   redirect('systems/Dashboard/add_user');
+			}
+			else
+			{
+			  $this->session->set_flashdata('error', "There was a Problem adding the user");
+			  redirect('systems/Dashboard/add_user');
+			}
+		}
+          
+ 
+        }
+    }
+
+
+
+// Adding payments records to the system
+	public function addbook(){
+		$this->form_validation->set_rules('book_title', 'book_title','trim|required|min_length[12]|max_length[64]');
+        $this->form_validation->set_rules('book_author', 'book_author','trim|required|min_length[4]|max_length[64]');
+        $this->form_validation->set_rules('book_category', 'book_category', 'trim|required');
+        $this->form_validation->set_rules('publisher_id', 'book_category', 'trim|required');
+        $this->form_validation->set_rules('book_image', 'book_image', 'trim');
+        $this->form_validation->set_rules('book', 'book', 'trim');
+        $this->form_validation->set_rules('book_isbn', 'book_isbn', 'trim|required|min_length[4]|max_length[16]|is_unique[books.book_isbn]');
+        $this->form_validation->set_rules('description', 'description', 'trim|max_length[256]');
+     
+
+        if ($this->form_validation->run() == FALSE) {
+            $this->add_book();
+        } else {
+
+        $book_title = Null;
+        $first_name = Null;
+		$last_name = Null;
+		$book_author = Null;
+		$book_category = Null;
+		$publisher_id = Null;
+		$book_path = Null;
+		$book_isbn = Null;
+		$description = Null;
+		
+				$config['upload_path']          = './assets/books/';
+                $config['allowed_types']        = 'gif|jpg|png|pdf';
+                // $config['max_size']             = 100;
+                $config['encrypt_name'] = true;
+                $config['max_width']            = 1024;
+                $config['max_height']           = 768;
+
+                $this->load->library('upload', $config);
+                if (!$this->upload->do_upload('book'))
+                {
+                        $error = array('error' => $this->upload->display_errors());
+
+                        // $this->load->view('upload_form', $error);
+                        print_r($error);
+                }
+                else
+                {
+                        $data = array('upload_data' => $this->upload->data());
+                        $info = $this->upload->data();
+                        // $this->load->view('upload_success', $data);
+                          // print_r($data);
+                          // echo $book_path = base_url("assets/books".'/'.$data['file_name']);
+                        echo $book_path = $info['file_name'];
+                }
+
+		extract($_POST);
+		$param['book_title']=$book_title;
+		$param['book_author']=$book_author;
+		$param['book_category']=$book_category;
+		$param['publisher_id']=$publisher_id;
+		$param['book_isbn']=$book_isbn;
+		$param['description']=$description;
+		// $param['book_image']=$cover_path;
+		$param['book']=$book_path;
+
+
+		if(isset($book_author)){
+			$this->load->model('System');
+			$check=$this->System->addbook($param);
+			// $result=$this->System->check_exist_payment($param);
+			// $data=array('index'=>$result);
+		 //    print_r($data);
+			$this->add_book();
+
+			if($check==true)
+			{
+			  $this->session->set_flashdata('true', 'The Book was added successfully, Add the Book Cover');
+			   redirect('systems/dashboard/book_view/'.$book_isbn);
+			}
+			else
+			{
+			  $this->session->set_flashdata('error', "There was a Problem adding the book");
+			  // redirect('systems/Dashboard/add_book');
+			}
+		}
+          
+  
+    	}
+	}
+	function book_view($x){
+		$data['condition']=array('book_isbn'=>$x);
+		$this->load->model('System');
+		$result=$this->System->book_info($data);
+		foreach($result as $re){
+		$data=array('index'=>$re);
+		$this->load->view('sys_admin/addcover',$data);
+	}
+
+	}
+	function add_cover(){
+		$this->form_validation->set_rules('book_title', 'book_title','trim|required|min_length[12]|max_length[64]');
+        $this->form_validation->set_rules('book_author', 'book_author','trim|required|min_length[4]|max_length[64]');
+        $this->form_validation->set_rules('book_category', 'book_category', 'trim|required');
+        $this->form_validation->set_rules('publisher_id', 'book_category', 'trim|required');
+        $this->form_validation->set_rules('book_image', 'book_image', 'trim');
+        $this->form_validation->set_rules('book_isbn', 'book_isbn', 'trim|required|min_length[4]|max_length[16]');
+        $this->form_validation->set_rules('description', 'description', 'trim|max_length[256]');
+     
+        if ($this->form_validation->run() == FALSE) {
+            $this->add_cover();
+        } else {
+		$book_title = Null;
+        $first_name = Null;
+        $book_image = Null;
+		$last_name = Null;
+		$book_author = Null;
+		$book_category = Null;
+		$publisher_id = Null;
+		$cover_path = Null;
+		$book_isbn = Null;
+		$description = Null;
+
+	
+		$config['upload_path']  = './assets/bookcovers/';
+        $config['allowed_types']        = 'gif|jpg|png|pdf';
+                // $config['max_size']             = 100;
+        $config['encrypt_name'] = true;
+        // $config['max_width']            = 1024;
+        // $config['max_height']           = 768;
+
+        $this->load->library('upload', $config);
+        if (!$this->upload->do_upload('book_image'))
+        {
+         $error = array('error' => $this->upload->display_errors());
+
+                        // $this->load->view('upload_form', $error);
+            print_r($error);
+         }
+        else
+        {
+        $data = array('upload_data' => $this->upload->data());
+        $info = $this->upload->data();
+        // $this->load->view('upload_success', $data);
+        // print_r($data);
+        echo $cover_path = base_url("assets/bookcovers".'/'.$info['file_name']);
+
+        }
+
+
+		extract($_POST);
+		$param['book_title']=$book_title;
+		$param['book_author']=$book_author;
+		$param['book_category']=$book_category;
+		$param['publisher_id']=$publisher_id;
+		$param['book_isbn']=$book_isbn;
+		$param['description']=$description;
+		$param['book_image']=$cover_path;
+
+		if(isset($book_isbn)){
+			$this->load->model('System');
+			$check=$this->System->add_cover($param);
+			// $result=$this->System->check_exist_payment($param);
+			// $data=array('index'=>$result);
+		 //    print_r($data);
+			$this->add_book();
+
+			if($check==true)
+			{
+			  $this->session->set_flashdata('true', 'Book Cover was added successfully');
+			   redirect('systems/dashboard/book_view/'.$book_isbn);
+			}
+			else
+			{
+			  $this->session->set_flashdata('error', "There was a Problem adding the book cover");
+			  redirect('systems/Dashboard/add_book'.$book_isbn);
+			}
+		}
+	}
+}
+// End of Adding payments methods
+
+
+}
